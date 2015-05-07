@@ -1,0 +1,32 @@
+{
+  "name": "new-file-plus",
+  "main": "./lib/new-file-plus",
+  "version": "0.0.0",
+  "author": {
+    "name": "Seth David Bullock",
+    "email": "sedabull@gmail.com",
+    "url": "http://github.com/sedabull"
+  },
+  "description": "Create multiple files at once using {brace} expansion!",
+  "keywords": [
+    "new files",
+    "brace expansion"
+  ],
+  "bugs": {
+    "email": "sedabull@gmail.com",
+    "url": "http://github.com/sedabull/new-file-plus/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sedabull/new-file-plus"
+  },
+  "license": "MIT",
+  "engines": {
+    "atom": ">=0.174.0"
+  },
+  "dependencies": {
+    "touch": "0.0.3",
+    "mkdirp": "0.5.0",
+    "atom-space-pen-views: 2.x"
+  }
+}
