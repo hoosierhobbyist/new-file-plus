@@ -36,8 +36,8 @@ module.exports =
             @panel.hide()
             prevPane.activate()
             if atom.project.getPaths().length > 0
-                relPath = path.relative atom.config.get('new-file-plus.baseDir'), atom.project.getPaths()[0]
-                @view.editor.setText relPath + path.sep
+                relPath = path.relative atom.config.get('new-file-plus.baseDir'), @view.cwd()
+                @view.editor.setText(relPath + path.sep) if relPath
         else
             prevPane = atom.workspace.getActivePane()
             @panel.show()
