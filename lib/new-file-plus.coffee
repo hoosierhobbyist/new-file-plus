@@ -9,12 +9,22 @@ module.exports =
     view: null
     panel: null
     subscriptions: null
+    config:
+        saveOnCreation:
+            type: 'boolean'
+            default: true
+            title: 'Save on Creation'
+            description: 'When true files will be immediately saved to disk when created'
+        baseDir:
+            type: 'string'
+            default: atom.config.get 'core.projectHome'
+            title: 'Base Directory'
+            description: 'The path which will be prepended to all non-absolute path names'
 
     activate: (state) ->
         @view = new NewFilePlusView()
         @subscriptions = new CompositeDisposable()
         @panel = atom.workspace.addModalPanel item: @view, visible: false
-
         @subscriptions.add atom.commands.add 'atom-workspace', 'new-file-plus:toggle': => @toggle()
 
     deactivate: ->
@@ -26,8 +36,8 @@ module.exports =
             @panel.hide()
             prevPane.activate()
             if atom.project.getPaths().length > 0
-                relPath = path.relative atom.config.get('core.projectHome'), atom.project.getPaths()[0]
-                @view.editor.setText relPath + '/'
+                relPath = path.relative atom.config.get('new-file-plus.baseDir'), atom.project.getPaths()[0]
+                @view.editor.setText relPath + path.sep
         else
             prevPane = atom.workspace.getActivePane()
             @panel.show()
