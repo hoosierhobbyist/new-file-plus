@@ -10,6 +10,11 @@ module.exports =
     panel: null
     subscriptions: null
     config:
+        safeMode:
+            type: 'boolean'
+            default: true
+            title: 'Safe Mode'
+            description: 'Prevents new-file-plus from overriding existing files'
         saveOnCreation:
             type: 'boolean'
             default: true
