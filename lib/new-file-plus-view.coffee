@@ -1,4 +1,5 @@
 path = require 'path'
+_ = require 'underscore-plus'
 {View, TextEditorView} = require 'atom-space-pen-views'
 
 module.exports =
@@ -9,23 +10,80 @@ class NewFilePlusView extends View
             @subview 'editor', new TextEditorView mini: true
 
     initialize: ->
-        if atom.project.getPaths().length > 0
-            relPath = path.relative atom.config.get('new-file-plus.baseDir'), atom.project.getPaths()[0]
-            @editor.setText relPath + path.sep
+        relPath = path.relative atom.config.get('new-file-plus.baseDir'), @cwd()
+        @editor.setText(relPath + path.sep) if relPath
 
+        @on 'core:cancel', =>
+            atom.commands.dispatch this[0], 'new-file-plus:toggle'
         @on 'core:confirm', =>
-            if path.isAbsolute @editor.getText()
-                newFile = @editor.getText()
-            else
-                newFile = path.join atom.config.get('new-file-plus.baseDir'), @editor.getText()
-            atom.workspace.open(newFile).then (fufilled, rejected, progressed) ->
-                if rejected
-                    console.error rejected
-                else if atom.config.get('new-file-plus.saveOnCreation')
-                    fufilled.save()
-            atom.commands.dispatch atom.views.getView(atom.workspace), 'new-file-plus:toggle'
+            atom.commands.dispatch this[0], 'new-file-plus:toggle'
+            files = _.flatten [@parse(@editor.getText())]
+            for file in files
+                unless path.isAbsolute file
+                    file = path.join atom.config.get('new-file-plus.baseDir'), file
+                fs.access file, (err) ->
+                    if err
+                        atom.workspace.open(file).then (fufilled, rejected) ->
+                            if rejected then console.error rejected
+                            else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
+                    else
+                        if atom.config.get 'new-file-plus.safeMode'
+                            console.warn "file: #{file} already exists"
+                        else
+                            fs.unlink file, (err) ->
+                                if err then return console.error err
+                                atom.workspace.open(file).then (fufilled, rejected) ->
+                                    if rejected then console.error rejected
+                                    else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
 
-    parseInput: (input) ->
-        initial = input.split /\s+/
-        initial.map (string) ->
-            return string unless /\{(\w\.\.\w|\d\.\.\d)\}/.test
+    cwd: ->
+        projectPaths = atom.project.getPaths()
+        activeTextEditor = atom.workspace.getActiveTextEditor()
+        activePath = path.dirname(activeTextEditor.getPath()) if activeTextEditor
+
+        if projectPaths.length is 1
+            return projectPaths[0]
+        else if projectPaths.length > 1 and activePath
+            for projectPath in projectPaths
+                if (new RegExp('^' + projectPath)).test activePath
+                    return projectPath
+        else if activePath
+            return activePath
+        return atom.config.get 'new-file-plus.baseDir'
+    
+    lowerCase =
+        a: 97, b: 98, c: 99, d: 100, e: 101, f: 102
+        g: 103, h: 104, i: 105, j: 106, k: 107, l: 108, m: 109
+        n: 110, o: 111, p: 112, q: 113, r: 114, s: 115
+        t: 116, u: 117, v: 118, w: 119, x: 120, y: 121, z: 122
+    upperCase =
+        A: 65, B: 66, C: 67, D: 68, E: 69, F: 70
+        G: 71, H: 72, I: 73, J: 74, K: 75, L: 76, M: 77
+        N: 78, O: 79, P: 80, Q: 81, R: 82, S: 83
+        T: 84, U: 85, V: 86, W: 87, X: 88, Y: 89, Z: 90
+
+    parse: (input) ->
+        if /\s+/.test input
+            input.split(/\s+/).map (string) => @parse string
+        else if /.*\{[^,]+(,[^,]+)*\}.*/.test input
+            outside = input.split /\{[^,]+(,[^,]+)*\}/
+            inside = input.match(/[^,]+(,[^,]+)*/)[0].split ','
+            for string in inside
+                @parse outside[0] + string + outside[1]
+        else if /.*\{\d+\.\.\d+\}.*/.test input
+            outside = input.split /\{\d+\.\.\d+\}/
+            range = input.match(/\d+\.\.\d+/)[0].split '..'
+            for i in [range[0]..range[1]]
+                @parse outside[0] + i + outside[1]
+        else if /.*\{[a-z]\.\.[a-z]\}.*/.test input
+            outside = input.split /\{[a-z]\.\.[a-z]\}/
+            range = input.match(/[a-z]\.\.[a-z]/)[0].split '..'
+            for i in [lowerCase[range[0]]..lowerCase[range[1]]]
+                @parse outside[0] + String.fromCharCode(i) + outside[1]
+        else if /.*\{[A-Z]\.\.[A-Z]\}.*/.test input
+            outside = input.split /\{[A-Z]\.\.[A-Z]\}/
+            range = input.match(/[A-Z]\.\.[A-Z]/).split '..'
+            for i in [upperCase[range[0]]..upperCase[range[1]]]
+                @parse outside[0] + String.fromCharCode(i) + outside[1]
+        else input
+        
