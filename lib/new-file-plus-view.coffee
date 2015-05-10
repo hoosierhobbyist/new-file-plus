@@ -28,7 +28,7 @@ class NewFilePlusView extends View
                             else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
                     else
                         if atom.config.get 'new-file-plus.safeMode'
-                            console.warn "file: #{file} already exists"
+                            atom.notifications.addWarning "file: #{file} already exists"
                         else
                             fs.unlink file, (err) ->
                                 if err then return console.error err
