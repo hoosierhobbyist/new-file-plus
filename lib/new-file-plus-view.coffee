@@ -90,18 +90,36 @@ class NewFilePlusView extends View
             for string in inside
                 @parse outside[0] + string + outside[1]
         else if /[^\{]*\{\d+\.\.\d+\}[^\}]*/.test input
-            range = input.slice(start+1, end).split '..'
-            outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-            for i in [parseInt(range[0])..parseInt(range[1])]
-                @parse outside[0] + i + outside[1]
+            if input.indexOf('{') isnt input.lastIndexOf('{') and input.lastIndexOf('{') < end
+                inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
+                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+                for string in inside
+                    @parse outside[0] + string + outside[1]
+            else
+                range = input.slice(start+1, end).split '..'
+                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+                for i in [parseInt(range[0])..parseInt(range[1])]
+                    @parse outside[0] + i + outside[1]
         else if /[^\{]*\{[a-z]\.\.[a-z]\}[^\}]*/.test input
-            range = input.slice(start+1, end).split '..'
-            outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-            for i in [lowerCase[range[0]]..lowerCase[range[1]]]
-                @parse outside[0] + String.fromCharCode(i) + outside[1]
+            if input.indexOf('{') isnt input.lastIndexOf('{') and input.lastIndexOf('{') < end
+                inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
+                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+                for string in inside
+                    @parse outside[0] + string + outside[1]
+            else
+                range = input.slice(start+1, end).split '..'
+                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+                for i in [lowerCase[range[0]]..lowerCase[range[1]]]
+                    @parse outside[0] + String.fromCharCode(i) + outside[1]
         else if /[^\{]*\{[A-Z]\.\.[A-Z]\}[^\}]*/.test input
-            range = input.slice(start+1, end).split '..'
-            outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-            for i in [upperCase[range[0]]..upperCase[range[1]]]
-                @parse outside[0] + String.fromCharCode(i) + outside[1]
+            if input.indexOf('{') isnt input.lastIndexOf('{') and input.lastIndexOf('{') < end
+                inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
+                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+                for string in inside
+                    @parse outside[0] + string + outside[1]
+            else
+                range = input.slice(start+1, end).split '..'
+                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+                for i in [upperCase[range[0]]..upperCase[range[1]]]
+                    @parse outside[0] + String.fromCharCode(i) + outside[1]
         else input
