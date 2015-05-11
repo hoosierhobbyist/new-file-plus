@@ -16,25 +16,26 @@ class NewFilePlusView extends View
         @on 'core:cancel', =>
             atom.commands.dispatch this[0], 'new-file-plus:toggle'
         @on 'core:confirm', =>
-            atom.commands.dispatch this[0], 'new-file-plus:toggle'
             files = _.flatten [@parse(@editor.getText())]
+            atom.commands.dispatch this[0], 'new-file-plus:toggle'
             for file in files
                 unless path.isAbsolute file
                     file = path.join atom.config.get('new-file-plus.baseDir'), file
-                fs.access file, (err) ->
-                    if err
-                        atom.workspace.open(file).then (fufilled, rejected) ->
-                            if rejected then console.error rejected
-                            else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
-                    else
-                        if atom.config.get 'new-file-plus.safeMode'
-                            atom.notifications.addWarning "file: #{file} already exists"
+                do(file) ->
+                    fs.access file, (err) ->
+                        if err
+                            atom.workspace.open(file).then (fufilled, rejected) ->
+                                if rejected then atom.notifications.addError rejected.toString()
+                                else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
                         else
-                            fs.unlink file, (err) ->
-                                if err then return console.error err
-                                atom.workspace.open(file).then (fufilled, rejected) ->
-                                    if rejected then console.error rejected
-                                    else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
+                            if atom.config.get 'new-file-plus.safeMode'
+                                atom.notifications.addError "file: #{file} already exists"
+                            else
+                                fs.unlink file, (err) ->
+                                    if err then return atom.notifications.addError err.toString()
+                                    atom.workspace.open(file).then (fufilled, rejected) ->
+                                        if rejected then atom.notifications.addError rejected.toString()
+                                        else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
             return
 
     cwd: ->
@@ -63,7 +64,7 @@ class NewFilePlusView extends View
         N: 78, O: 79, P: 80, Q: 81, R: 82, S: 83
         T: 84, U: 85, V: 86, W: 87, X: 88, Y: 89, Z: 90
 
-    slice: (input) ->
+    range: (input) ->
         count = -1
         end = Infinity
         start = input.indexOf '{'
@@ -80,46 +81,30 @@ class NewFilePlusView extends View
 
     parse: (input) ->
         if /.*\{.*\}.*/.test input
-            [start, end] = @slice input
+            [start, end] = @range input
+        else
+            [start, end] = [0, input.length-1]
 
         if /\s+/.test input
             input.split(/\s+/).map((string) => @parse string)
-        else if /.*\{[^,\.]+(,[^,\.]+)*\}.*/.test input
+        else if /^\{\d+\.\.\d+\}$/.test input.slice start, end+1
+            range = input.slice(start+1, end).split '..'
+            outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+            for i in [parseInt(range[0])..parseInt(range[1])]
+                @parse outside[0] + i + outside[1]
+        else if /^\{[a-z]\.\.[a-z]\}$/.test input.slice start, end+1
+            range = input.slice(start+1, end).split '..'
+            outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+            for i in [lowerCase[range[0]]..lowerCase[range[1]]]
+                @parse outside[0] + String.fromCharCode(i) + outside[1]
+        else if /^\{[A-Z]\.\.[A-Z]\}$/.test input.slice start, end+1
+            range = input.slice(start+1, end).split '..'
+            outside = input.replace(input.slice(start, end+1), '\0').split '\0'
+            for i in [upperCase[range[0]]..upperCase[range[1]]]
+                @parse outside[0] + String.fromCharCode(i) + outside[1]
+        else if /\{[^,]+(,[^,]+)*\}/.test input.slice start, end+1
             inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
             outside = input.replace(input.slice(start, end+1), '\0').split '\0'
             for string in inside
                 @parse outside[0] + string + outside[1]
-        else if /[^\{]*\{\d+\.\.\d+\}[^\}]*/.test input
-            if input.indexOf('{') isnt input.lastIndexOf('{') and input.lastIndexOf('{') < end
-                inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
-                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-                for string in inside
-                    @parse outside[0] + string + outside[1]
-            else
-                range = input.slice(start+1, end).split '..'
-                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-                for i in [parseInt(range[0])..parseInt(range[1])]
-                    @parse outside[0] + i + outside[1]
-        else if /[^\{]*\{[a-z]\.\.[a-z]\}[^\}]*/.test input
-            if input.indexOf('{') isnt input.lastIndexOf('{') and input.lastIndexOf('{') < end
-                inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
-                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-                for string in inside
-                    @parse outside[0] + string + outside[1]
-            else
-                range = input.slice(start+1, end).split '..'
-                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-                for i in [lowerCase[range[0]]..lowerCase[range[1]]]
-                    @parse outside[0] + String.fromCharCode(i) + outside[1]
-        else if /[^\{]*\{[A-Z]\.\.[A-Z]\}[^\}]*/.test input
-            if input.indexOf('{') isnt input.lastIndexOf('{') and input.lastIndexOf('{') < end
-                inside = input.slice(start+1, end).match /([^,]*\{.*\}[^,]*|[^,]+)/g
-                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-                for string in inside
-                    @parse outside[0] + string + outside[1]
-            else
-                range = input.slice(start+1, end).split '..'
-                outside = input.replace(input.slice(start, end+1), '\0').split '\0'
-                for i in [upperCase[range[0]]..upperCase[range[1]]]
-                    @parse outside[0] + String.fromCharCode(i) + outside[1]
         else input
