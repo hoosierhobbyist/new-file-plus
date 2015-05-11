@@ -28,6 +28,7 @@ module.exports =
 
     activate: (state) ->
         @view = new NewFilePlusView()
+        atom.test = @view
         @subscriptions = new CompositeDisposable()
         @panel = atom.workspace.addModalPanel item: @view, visible: false
         @subscriptions.add atom.commands.add 'atom-workspace', 'new-file-plus:toggle': => @toggle()
