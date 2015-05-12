@@ -1,22 +1,10 @@
 # See https://atom.io/docs/latest/hacking-atom-package-word-count#menus for more details
-'context-menu':
-  'atom-text-editor': [
-    {
-      'label': 'Toggle new-file-plus'
-      'command': 'new-file-plus:toggle'
-    }
-  ]
 'menu': [
   {
-    'label': 'Packages'
+    'label': 'File'
     'submenu': [
-      'label': 'new-file-plus'
-      'submenu': [
-        {
-          'label': 'Toggle'
-          'command': 'new-file-plus:toggle'
-        }
-      ]
+      'label': 'New File'
+      'command': 'new-file-plus:toggle'
     ]
   }
 ]
