@@ -1,6 +1,5 @@
 path = require 'path'
 {CompositeDisposable} = require 'atom'
-NewFilePlusView = require './new-file-plus-view'
 
 #closures
 prevPane = null
@@ -19,7 +18,7 @@ module.exports =
             type: 'boolean'
             default: true
             title: 'Save on Creation'
-            description: 'When true files will be immediately saved to disk when created'
+            description: 'When checked, files will be immediately saved to disk when created'
         baseDir:
             type: 'string'
             default: atom.config.get 'core.projectHome'
@@ -27,23 +26,24 @@ module.exports =
             description: 'The path which will be prepended to all non-absolute path names'
 
     activate: (state) ->
-        @view = new NewFilePlusView()
-        atom.test = @view
         @subscriptions = new CompositeDisposable()
-        @panel = atom.workspace.addModalPanel item: @view, visible: false
         @subscriptions.add atom.commands.add 'atom-workspace', 'new-file-plus:toggle': => @toggle()
 
     deactivate: ->
-        @panel.destroy()
+        @panel?.destroy()
         @subscriptions.dispose()
 
     toggle: ->
+        NewFilePlusView = require './new-file-plus-view'
+        @view ?= new NewFilePlusView()
+        @panel ?= atom.workspace.addModalPanel item: @view, visible: false
+
         if @panel.isVisible()
             @panel.hide()
             prevPane.activate()
-            relPath = path.relative atom.config.get('new-file-plus.baseDir'), @view.cwd()
-            @view.editor.setText(relPath + path.sep) if relPath
         else
             prevPane = atom.workspace.getActivePane()
             @panel.show()
             @view.editor.focus()
+            relPath = path.relative atom.config.get('new-file-plus.baseDir'), @view.cwd()
+            @view.editor.setText(relPath + path.sep) if relPath
