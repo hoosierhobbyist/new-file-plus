@@ -1,4 +1,4 @@
-# New File Plus - A better way to `ctrl-n`
+## New File Plus - A better way to `{cmd,ctrl}-n`
 
 This package overrides the existing `new-file` command to provide a more powerful and convenient way to create multiple files at once. Using the package [juliangruber/brace-expansion](http://github.com/juliangruber/brace-expansion), bash-like brace expansion can be used to specify a concise pattern that expands into a very large number of files. Original inspiration: [atom/atom#6537](http://github.com/atom/atom/issues/6537).
 
