@@ -47,7 +47,7 @@ class NewFilePlusView extends View
     cwd: ->
         projectPaths = atom.project.getPaths()
         activeTextEditor = atom.workspace.getActiveTextEditor()
-        activePath = path.dirname(activeTextEditor.getPath()) if activeTextEditor.getPath()
+        activePath = path.dirname(activeTextEditor.getPath()) if activeTextEditor and activeTextEditor.getPath()
 
         if activePath
             return activePath
