@@ -1,3 +1,4 @@
+fs = require 'fs'
 path = require 'path'
 mkdirp = require 'mkdirp'
 expand = require 'brace-expansion'
@@ -11,6 +12,8 @@ class NewFilePlusView extends View
             @subview 'editor', new TextEditorView mini: true
 
     initialize: ->
+        @mode = ''
+
         @on 'core:cancel', =>
             atom.commands.dispatch this[0], 'new-file-plus:toggle'
         @on 'core:confirm', =>
@@ -19,30 +22,37 @@ class NewFilePlusView extends View
             for file in files
                 unless path.isAbsolute file
                     file = path.join atom.config.get('new-file-plus.baseDir'), file
-                do(file) ->
-                    fs.access file, (err) ->
+                do(file) =>
+                    fs.access file, (err) =>
                         if err
-                            if RegExp(path.sep + '$').test file
-                                mkdirp file, (err) ->
-                                    if err then atom.notifications.addError err.toString()
+                            if @mode is 'file'
+                                @createFile file
+                            else if @mode is 'folder'
+                                @createFolder file
                             else
-                                atom.workspace.open(file).then (fufilled, rejected) ->
-                                    if rejected then atom.notifications.addError rejected.toString()
-                                    else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
+                                if RegExp(path.sep + '$').test file
+                                    @createFolder file
+                                else
+                                    @createFile file
                         else
                             if atom.config.get 'new-file-plus.safeMode'
                                 atom.notifications.addError "file: #{file} already exists"
                             else
                                 fs.unlink file, (err) ->
-                                    if err then return atom.notifications.addError err.toString()
-                                    if RegExp(path.sep + '$').test file
-                                        mkdirp file, (err) ->
-                                            if err then atom.notifications.addError err.toString()
+                                    if err
+                                        return atom.notifications.addError err.toString()
+                                    if @mode is 'file'
+                                        @createFile file
+                                    else if @mode is 'folder'
+                                        @createFolder file
                                     else
-                                        atom.workspace.open(file).then (fufilled, rejected) ->
-                                            if rejected then atom.notifications.addError rejected.toString()
-                                            else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()
+                                        if RegExp(path.sep + '$').test file
+                                            @createFolder file
+                                        else
+                                            @createFile file
             return
+
+    setMode: (@mode = '') ->
 
     cwd: ->
         projectPaths = atom.project.getPaths()
@@ -54,3 +64,12 @@ class NewFilePlusView extends View
         else if projectPaths.length is 1
             return projectPaths[0]
         return atom.config.get 'new-file-plus.baseDir'
+
+    createFolder: (folder) ->
+        mkdirp folder, (err) ->
+            if err then atom.notifications.addError err.toString()
+
+    createFile: (file) ->
+        atom.workspace.open(file).then (fufilled, rejected) ->
+            if rejected then atom.notifications.addError rejected.toString()
+            else if atom.config.get('new-file-plus.saveOnCreation') then fufilled.save()

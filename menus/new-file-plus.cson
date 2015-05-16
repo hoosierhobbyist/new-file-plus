@@ -8,3 +8,9 @@
     ]
   }
 ]
+
+'context-menu':
+    '.tree-view.full-menu': [
+        {'label': 'New File(+)', 'command': 'new-file-plus:add-file'}
+        {'label': 'New Folder(+)', 'command': 'new-file-plus:add-folder'}
+    ]
