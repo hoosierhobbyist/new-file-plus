@@ -12,6 +12,7 @@ a{b..d}{1,2}.txt => ab1.txt, ab2.txt, ac1.txt, ac2.txt, ad1.txt, ad2.txt
 ```
 
 ## Other Features
+* Tree View context menu items `New File(+)` and `New Folder(+)`
 * Create new directories by ending a pattern with either `/` or `\`
 * Safe mode option to prevent overwriting existing files
 * Save on creation option to automatically save new files to disk
