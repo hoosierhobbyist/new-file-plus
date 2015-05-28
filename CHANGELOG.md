@@ -1,3 +1,6 @@
+## 0.2.1 - Remove Deprecations
+* `new-file-plus` is now Atom 1.0 ready
+
 ## 0.2.0 - Add Tree View support
 * Two new Tree View context menu options `New File(+)` and `New Folder(+)`
 * Context menus don't overwrite the same way the normal menu does, thus the trailing `(+)`
