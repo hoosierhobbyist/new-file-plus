@@ -2,6 +2,7 @@ fs = require 'fs'
 path = require 'path'
 mkdirp = require 'mkdirp'
 expand = require 'brace-expansion'
+{CompositeDisposable} = require 'atom'
 {View, TextEditorView} = require 'atom-space-pen-views'
 
 module.exports =
@@ -13,10 +14,11 @@ class NewFilePlusView extends View
 
     initialize: ->
         @mode = ''
+        @subscriptions = new CompositeDisposable()
 
-        @on 'core:cancel', =>
+        @subscriptions.add atom.commands.add this[0], 'core:cancel', =>
             atom.commands.dispatch this[0], 'new-file-plus:toggle'
-        @on 'core:confirm', =>
+        @subscriptions.add atom.commands.add this[0], 'core:confirm', =>
             files = expand @editor.getText()
             atom.commands.dispatch this[0], 'new-file-plus:toggle'
             for file in files
@@ -53,6 +55,9 @@ class NewFilePlusView extends View
             return
 
     setMode: (@mode = '') ->
+
+    destroy: ->
+        @subscriptions.dispose()
 
     cwd: ->
         projectPaths = atom.project.getPaths()

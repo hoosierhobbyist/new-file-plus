@@ -34,6 +34,7 @@ module.exports =
             'new-file-plus:add-folder': => @addFolder()
 
     deactivate: ->
+        @view?.destroy()
         @panel?.destroy()
         @subscriptions.dispose()
 
